@@ -1,0 +1,11 @@
+# Python virtual environment
+.venv/
+
+# Evol_Instruct_Japaneseの出力ファイル
+Evol_Instruct_Japanese/output/
+
+# Pythonのキャッシュファイル
+Evol_Instruct_Japanese/__pycache__/
+
+# secret
+Evol_Instruct_Japanese/config/secret_config.json
