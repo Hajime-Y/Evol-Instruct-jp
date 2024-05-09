@@ -1,6 +1,6 @@
 # Evol-Instruct-jp
 
-下記を参考に、日本語でMixtral 8x22B Instructを使って合成データを作るためのコードです。  
+下記を参考にした、日本語でMixtral 8x22B Instructを使って合成データを作るためのコードです。  
  - report: [WizardLM: Empowering Large Language Models to Follow Complex Instructions](https://arxiv.org/abs/2304.12244)
  - reference: [WizardLMのEvol_Instruct](https://github.com/nlpxucan/WizardLM/tree/main/Evol_Instruct)
 
