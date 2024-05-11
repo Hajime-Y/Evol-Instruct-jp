@@ -58,8 +58,8 @@ def process_obj(cur_obj, model, stop_words, answer_flg):
     breadth_mult = calculate_breadth_multiplier(evol_history)
 
     # 初期Instruction
-    if 'instances' in cur_obj and 'input' in cur_obj["instances"][0]:
-        instruction = cur_obj['instruction'].strip() + '\n'+ cur_obj["instances"][0]['input'].strip()
+    if cur_obj.get("input"):
+        instruction = cur_obj['instruction'].strip() + '\n'+ cur_obj['input'].strip()
     else:
         instruction = cur_obj['instruction'].strip()
 
@@ -112,7 +112,7 @@ def calculate_breadth_multiplier(evol_history):
     if breadth_count == 0:
         return 4
     elif breadth_count == 1:
-        return 2
+        return 3
     else:
         return 1
 	
