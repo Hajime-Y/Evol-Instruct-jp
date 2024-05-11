@@ -1,10 +1,33 @@
 # ==============================
 # 幅進化：問題のタイプを増やす
 # ==============================
+# v1
+# base_instruction = "I want you act as a Prompt Creator.\n\
+# Your goal is to draw inspiration from the #Given Prompt# to create a brand new prompt.\n\
+# This new prompt should belong to the same domain as the #Given Prompt# but be even more rare.\n\
+# The LENGTH and complexity of the #Created Prompt# should be similar to that of the #Given Prompt#.\n\
+# The #Created Prompt# must be reasonable, easily understood and responded to by humans, and phrased naturally in Japanese, not in English.\n\
+# '#Given Prompt#', '#Created Prompt#', 'given prompt' and 'created prompt' are not allowed to appear in #Created Prompt#\n"
 
+# v1.1
+# base_instruction = "I want you act as a Prompt Creator.\n\
+# Your goal is to draw inspiration from the #Given Prompt# to create a brand new prompt.\n\
+# This new prompt should has only one similarity to #Given Prompt#, but is much rarer.\n\
+# The LENGTH and complexity of the #Created Prompt# should be similar to that of the #Given Prompt#.\n\
+# The #Created Prompt# must be reasonable, easily understood and responded to by humans, and phrased naturally in Japanese, not in English.\n\
+# '#Given Prompt#', '#Created Prompt#', 'given prompt' and 'created prompt' are not allowed to appear in #Created Prompt#\n"
+
+# v1.2
+# base_instruction = "I want you act as a Prompt Creator.\n\
+# Your goal is to draw inspiration from the #Given Prompt# to create a brand new prompt.\n\
+# The LENGTH and complexity of the #Created Prompt# should be similar to that of the #Given Prompt#.\n\
+# The #Created Prompt# must be reasonable, easily understood and responded to by humans, and phrased naturally in Japanese, not in English.\n\
+# '#Given Prompt#', '#Created Prompt#', 'given prompt' and 'created prompt' are not allowed to appear in #Created Prompt#\n"
+
+# v1.3
 base_instruction = "I want you act as a Prompt Creator.\n\
 Your goal is to draw inspiration from the #Given Prompt# to create a brand new prompt.\n\
-This new prompt should belong to the same domain as the #Given Prompt# but be even more rare.\n\
+This new prompt should be much rarer.\n\
 The LENGTH and complexity of the #Created Prompt# should be similar to that of the #Given Prompt#.\n\
 The #Created Prompt# must be reasonable, easily understood and responded to by humans, and phrased naturally in Japanese, not in English.\n\
 '#Given Prompt#', '#Created Prompt#', 'given prompt' and 'created prompt' are not allowed to appear in #Created Prompt#\n"

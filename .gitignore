@@ -3,6 +3,9 @@
 
 # Evol_Instruct_Japaneseの出力ファイル
 Evol_Instruct_Japanese/output/
+Evol_Instruct_Japanese/test_output/*
+!Evol_Instruct_Japanese/test_output/test_eliminated.json
+!Evol_Instruct_Japanese/test_output/test_generated.json
 
 # Pythonのキャッシュファイル
 Evol_Instruct_Japanese/__pycache__/
