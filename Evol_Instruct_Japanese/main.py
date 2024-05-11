@@ -3,12 +3,13 @@ main.py
 
 run:
 python main.py \
-	--input_file "./data/seed_tasks_jp_cleaned.jsonl" \
+	--input_file "./data/alpaca_seed_tasks_jp.jsonl" \
 	--output_file "./output/new_generation.json" \
 	--eliminated_file "./output/eliminated.json" \
 	--model "mistralai/Mixtral-8x22B-Instruct-v0.1" \
 	--generations 3 \
-	--num_instructions_to_generate 10
+	--num_instructions_to_generate 10 \
+	--subset_size 10
 """
 
 import os
@@ -29,6 +30,7 @@ def parse_arguments():
 	parser.add_argument('--model', type=str, default='mistralai/Mixtral-8x22B-Instruct-v0.1', help='model name')
 	parser.add_argument('--generations', type=int, default=3, help='Number of generations to evolve')
 	parser.add_argument('--num_instructions_to_generate', type=int, default=10, help='Number of instructions to generate in final generation')
+	parser.add_argument('--subset_size', type=int, default=-1, help='Specify the subset size of the dataset for evolution. Default is -1, which uses the entire dataset.')
 	return parser.parse_args()
 
 
@@ -87,47 +89,58 @@ def main():
 
 
 	# 進捗バーの初期化
-	pbar = tqdm(total=args.num_instructions_to_generate, initial=first_count)
+	pbar = tqdm(total=args.num_instructions_to_generate, initial=first_count, desc=f"Evolution Progress")
 	
 
 	# 複数回Instruction進化をnum_instructions_to_generate数に達するまで実施
-	next_all_objs = all_objs
 	# ループ前の件数
 	cur_count = len(all_evol_objs[f"gen_{final_gen}"])
 	while cur_count < args.num_instructions_to_generate:
+		next_all_objs = copy.deepcopy(all_objs)
 
-		# 指定された世代までInstruction進化
-		for gen_number in tqdm(range(cur_gen+1, final_gen+1)):
-			# Instructionの進化
-			evol_objs, pool_objs = evol_instruct(
-				next_all_objs, 
-				model=model, 
-				stop_words=stop_words,
-				final_gen_flg=(gen_number==final_gen),  # 最終世代のみAnswerを生成
-			)
-			# 格納
-			all_evol_objs[f"gen_{gen_number}"].extend(copy.deepcopy(evol_objs))  # 辞書の操作は参照によるもの。evol_objsの変更がall_evol_ojsに影響を与えないようにdeepcopyする。
-			all_pool_objs[f"gen_{gen_number}"].extend(copy.deepcopy(pool_objs))  # 同上
+		# サブセットサイズが設定されている場合、データセットを分割
+		if args.subset_size > 0:
+			subset_indices = range(0, len(next_all_objs), args.subset_size)
+			subsets = [next_all_objs[i:i + args.subset_size] for i in subset_indices]
+		else:
+			subsets = [next_all_objs]  # サブセットなしで全データを使用
 
-			# 次の世代の元を入れ替え
-			next_all_objs = evol_objs
+		for subset in tqdm(subsets, disable=len(subsets) == 1, desc="Subset Progress"):
+			# 指定された世代までInstruction進化
+			for gen_number in tqdm(range(cur_gen+1, final_gen+1), desc=f"Generation Progress"):
+				# Instructionの進化
+				evol_objs, pool_objs = evol_instruct(
+					subset, 
+					model=model, 
+					stop_words=stop_words,
+					final_gen_flg=(gen_number==final_gen),  # 最終世代のみAnswerを生成
+				)
+				# 格納
+				all_evol_objs[f"gen_{gen_number}"].extend(copy.deepcopy(evol_objs))  # 辞書の操作は参照によるもの。evol_objsの変更がall_evol_ojsに影響を与えないようにdeepcopyする。
+				all_pool_objs[f"gen_{gen_number}"].extend(copy.deepcopy(pool_objs))  # 同上
 
-		# 結果途中出力
-		utils.update_json_file(args.output_file, all_evol_objs)
-		utils.update_json_file(args.eliminated_file, all_pool_objs)
+				# 次の世代の元を入れ替え
+				subset = evol_objs
 
-		# 途中結果出力
-		new_cur_count = len(all_evol_objs[f"gen_{final_gen}"])
-		print("{}件のInstructionを追加しました。".format(new_cur_count - cur_count))
+			# 結果途中出力
+			utils.update_json_file(args.output_file, all_evol_objs)
+			utils.update_json_file(args.eliminated_file, all_pool_objs)
 
-		# 進捗バーを更新
-		pbar.update(new_cur_count - cur_count)
+			# 途中結果出力
+			new_cur_count = len(all_evol_objs[f"gen_{final_gen}"])
+			print("{}件のInstructionを追加しました。".format(new_cur_count - cur_count))
 
-		# 現状件数の更新
-		cur_count = new_cur_count
+			# 進捗バーを更新
+			pbar.update(new_cur_count - cur_count)
 
-		# 最終世代までいったら元の世代から再度実施
-		next_all_objs = all_objs
+			# 現状件数の更新
+			cur_count = new_cur_count
+
+			# 生成目標数に達したか確認
+			if cur_count >= args.num_instructions_to_generate:
+				print("目標数に達しました。ループを終了します。")
+				break  # forループを抜ける
+
 
 	# 進捗バーを完了
 	pbar.close()
