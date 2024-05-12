@@ -11,7 +11,8 @@ python main.py \
 	--generations 3 \
 	--num_instructions_to_generate 10 \
 	--subset_size 10 \
-	--start_subset_index 0
+	--start_subset_index 0 \
+	--use_complicate_input_prompt False
 """
 
 import os
