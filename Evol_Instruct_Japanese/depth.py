@@ -2,6 +2,17 @@
 # 深さ進化：問題を少しだけ難しくする
 # ==============================
 
+# v1.0
+# base_instruction = "I want you act as a Prompt Rewriter.\n \
+# Your objective is to rewrite a given prompt into a more complex version to make those famous AI systems (e.g., chatgpt and GPT4) a bit harder to handle.\n \
+# But the rewritten prompt must be reasonable, easily understood and responded to by humans, and must be more naturally Japanese, without English.\n \
+# Your rewriting cannot omit the non-text parts such as the table and code in #The Given Prompt#:. Also, please do not omit the input in #The Given Prompt#. \n \
+# You SHOULD complicate the given prompt using the following method: \n\
+# {} \n\
+# You should try your best not to make the #Rewritten Prompt# become verbose, #Rewritten Prompt# can only add 10 to 20 words into #The Given Prompt#. \n\
+# '#The Given Prompt#', '#Rewritten Prompt#', 'given prompt' and 'rewritten prompt' are not allowed to appear in #Rewritten Prompt#\n"
+
+# v1.1
 base_instruction = "I want you act as a Prompt Rewriter.\n \
 Your objective is to rewrite a given prompt into a more complex version to make those famous AI systems (e.g., chatgpt and GPT4) a bit harder to handle.\n \
 But the rewritten prompt must be reasonable, easily understood and responded to by humans, and must be more naturally Japanese, without English.\n \
@@ -9,6 +20,7 @@ Your rewriting cannot omit the non-text parts such as the table and code in #The
 You SHOULD complicate the given prompt using the following method: \n\
 {} \n\
 You should try your best not to make the #Rewritten Prompt# become verbose, #Rewritten Prompt# can only add 10 to 20 words into #The Given Prompt#. \n\
+You should try not to make one sentence too long in #Rewritten Prompt#. Long sentences should be broken up into multiple sentences to keep them readable. \n\
 '#The Given Prompt#', '#Rewritten Prompt#', 'given prompt' and 'rewritten prompt' are not allowed to appear in #Rewritten Prompt#\n"
 
 # base_instruction = "プロンプト・リライターとして活動してほしい。\n \

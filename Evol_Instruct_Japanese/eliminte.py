@@ -9,7 +9,7 @@
 # ===============================
 
 # 1.のプロンプト
-eliminate_prompt = """Here are two Instructions to ChatGPT AI, do you think they are equal to each other, which meet
+eliminate_compare_prompt = """Here are two Instructions to ChatGPT AI, do you think they are equal to each other, which meet
 the following requirements:
 1. They have same constraints and requirments.
 2. They have same depth and breadth of the inquiry.
@@ -27,8 +27,16 @@ Your Judgement (Just answer: Equal or Not Equal. No need to explain the reason.)
 # あなたの判断（「同等か同等でないか」だけ答えてください）: 
 # """
 
-def createEliminatePrompt(instruction, evol_instruction):
-    prompt = eliminate_prompt.format(
+# 5. のプロンプト（追加）
+eliminate_hallucination_prompt = """Evaluate the LLM instruction below to see if it:
+1. It does not use non-existent words.
+2. Relates to factual information for Japanese.
+Prompt: {instruction}
+Your Judgement (Just answer: True or False. No need to explain the reason.):
+"""
+
+def createEliminateComparePrompt(instruction, evol_instruction):
+    prompt = eliminate_compare_prompt.format(
         first_instruction=instruction, 
         second_instruction=evol_instruction
     )
@@ -76,3 +84,9 @@ def check_copied_words(evol_instruction):
     """
     copied_phrases = ["given prompt", "rewritten prompt", "#Given Prompt#", "#Rewritten Prompt#"]
     return any(phrase in evol_instruction for phrase in copied_phrases)
+
+def createEliminateHallucinationPrompt(instruction):
+    prompt = eliminate_hallucination_prompt.format(
+        instruction=instruction, 
+    )
+    return prompt

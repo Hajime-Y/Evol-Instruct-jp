@@ -7,6 +7,7 @@ python main.py \
 	--output_file "./output/new_generation.json" \
 	--eliminated_file "./output/eliminated.json" \
 	--model "mistralai/Mixtral-8x22B-Instruct-v0.1" \
+	--hallucination_check_model "mistralai/Mixtral-8x7B-Instruct-v0.1" \
 	--generations 3 \
 	--num_instructions_to_generate 10 \
 	--subset_size 10 \
@@ -29,6 +30,7 @@ def parse_arguments():
 	parser.add_argument('--output_file', type=str, default='./output/new_generation.json', help='Output file path for new generations')
 	parser.add_argument('--eliminated_file', type=str, default='./output/eliminated.json', help='Output file path for eliminated items')
 	parser.add_argument('--model', type=str, default='mistralai/Mixtral-8x22B-Instruct-v0.1', help='model name')
+	parser.add_argument('--hallucination_check_model', type=str, default='mistralai/Mixtral-8x7B-Instruct-v0.1', help='Model to check for hallucinated words or concepts. It is recommended to use a different model from the main model.')
 	parser.add_argument('--generations', type=int, default=3, help='Number of generations to evolve')
 	parser.add_argument('--num_instructions_to_generate', type=int, default=10, help='Number of instructions to generate in final generation')
 	parser.add_argument('--subset_size', type=int, default=-1, help='Specify the subset size of the dataset for evolution. Default is -1, which uses the entire dataset.')
@@ -45,6 +47,8 @@ def main():
 	input_file = args.input_file
 	# 利用モデル
 	model = args.model
+	# 語彙・概念チェック用モデル
+	hallucination_check_model = args.hallucination_check_model
 
 
 	# ファイルを開く
@@ -121,6 +125,7 @@ def main():
 				evol_objs, pool_objs = evol_instruct(
 					subset, 
 					model=model, 
+					hallucination_check_model=hallucination_check_model,
 					stop_words=stop_words,
 					final_gen_flg=(gen_number==final_gen),  # 最終世代のみAnswerを生成
 				)

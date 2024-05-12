@@ -2,13 +2,13 @@ import random
 from tqdm.auto import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from mixtral_access import call_chatmodel, compare_evol_instructions
+from mixtral_access import call_chatmodel, compare_evol_instructions, check_hallucination
 from depth import createConstraintsPrompt, createDeepenPrompt, createConcretizingPrompt, createReasoningPrompt
 from breadth import createBreadthPrompt
-from eliminte import createEliminatePrompt, check_difficulty, check_punctuation_stopwords, check_copied_words
+from eliminte import createEliminateComparePrompt, createEliminateHallucinationPrompt, check_difficulty, check_punctuation_stopwords, check_copied_words
 
 
-def evol_instruct(all_objs, model="mistralai/Mixtral-8x22B-Instruct-v0.1", stop_words=[], final_gen_flg=False):
+def evol_instruct(all_objs, model="mistralai/Mixtral-8x22B-Instruct-v0.1", hallucination_check_model="mistralai/Mixtral-8x7B-Instruct-v0.1", stop_words=[], final_gen_flg=False):
 	"""
     渡されたInstructionを含む辞書リスト(all_objs)に対して、evol_instructを行う。
 	成功したinstructionを含む辞書リスト(evol_objs)と失敗したinstructionを含む辞書リスト(pool_objs)を返す。
@@ -16,6 +16,7 @@ def evol_instruct(all_objs, model="mistralai/Mixtral-8x22B-Instruct-v0.1", stop_
     Args:
         all_objs (list): 進化させる指示のリスト。
         model (str): 使用するモデルの名前。デフォルトは 'mistralai/Mixtral-8x22B-Instruct-v0.1'。
+        hallucination_check_model (str): 存在しない単語・概念等が含まれるかどうかを確認するモデルの名前。modelとは異なるモデルを指定することを推奨。デフォルトは 'mistralai/Mixtral-8x7B-Instruct-v0.1'。
         stop_words (list): ストップワードのリスト。デフォルトは空のリスト。
 		final_gen_flg (bool): 最終世代(Answerが必要な世代)かどうかのフラグ。デフォルトはFalse。
 
@@ -31,7 +32,7 @@ def evol_instruct(all_objs, model="mistralai/Mixtral-8x22B-Instruct-v0.1", stop_
 		return evol_objs, pool_objs
 	
 	with ThreadPoolExecutor() as executor:
-		futures = [executor.submit(process_obj, obj, model, stop_words, final_gen_flg) for obj in all_objs]
+		futures = [executor.submit(process_obj, obj, model, hallucination_check_model, stop_words, final_gen_flg) for obj in all_objs]
 		for future in as_completed(futures):
 			category, result = future.result()
 			if category == "eliminated":
@@ -46,7 +47,7 @@ def evol_instruct(all_objs, model="mistralai/Mixtral-8x22B-Instruct-v0.1", stop_
 	return evol_objs, pool_objs
 
 
-def process_obj(cur_obj, model, stop_words, answer_flg):
+def process_obj(cur_obj, model, hallucination_check_model, stop_words, answer_flg):
 	# ID
     origin_id = cur_obj.get("id", "")
     # 世代
@@ -70,9 +71,13 @@ def process_obj(cur_obj, model, stop_words, answer_flg):
     # Instructionの進化
     evol_instruction = call_chatmodel(selected_evol_prompt, model_name=model)
 
+    # "Translation:"以下の削除（Mixtralを使った場合、たまに入る）
+    if "Translation:" in evol_instruction:
+        evol_instruction = evol_instruction.split("Translation:")[0].strip()
+
     # 進化したInstructionのチェック
     # 1. instruction, evol_instructionが同等かどうか
-    check_prompt = createEliminatePrompt(instruction, evol_instruction)
+    check_prompt = createEliminateComparePrompt(instruction, evol_instruction)
     if compare_evol_instructions(check_prompt, model_name=model):
         return "eliminated", {"id": origin_id, "generation": generation, "evol_history": evol_history, "instruction": evol_instruction, "output": "", "type": 1}
 
@@ -80,9 +85,14 @@ def process_obj(cur_obj, model, stop_words, answer_flg):
     if check_copied_words(evol_instruction):
         return "eliminated", {"id": origin_id, "generation": generation, "evol_history": evol_history, "instruction": evol_instruction, "output": "", "type": 4}
     
+    # 5. instructionに存在しない単語・概念等が含まれるかどうか（追加）
+    check_prompt = createEliminateHallucinationPrompt(evol_instruction)
+    if not check_hallucination(check_prompt, model_name=hallucination_check_model):
+        return "eliminated", {"id": origin_id, "generation": generation, "evol_history": evol_history, "instruction": evol_instruction, "output": "", "type": 5}
+    
     # 回答の生成
     if answer_flg:
-        answer = call_chatmodel(evol_instruction+"\nAnswer in Japanese, not in English.", model_name=model)
+        answer = call_chatmodel(evol_instruction+"\nYou must point out any uncertainties or misunderstandings in the instruction and provide as factual a response as possible.\nAnswer in Japanese, not in English.", model_name=model)
     else:
         # 回答の生成を行わない場合、この時点でInstructionの進化成功として返す
         return "evolved", {"id": origin_id, "generation": generation, "evol_history": evol_history, "instruction":evol_instruction, "output":""}
