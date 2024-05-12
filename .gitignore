@@ -12,3 +12,6 @@ Evol_Instruct_Japanese/__pycache__/
 
 # secret
 Evol_Instruct_Japanese/config/secret_config.json
+
+# Jupyter Notebook
+Evol_Instruct_Japanese/0*.ipynb
