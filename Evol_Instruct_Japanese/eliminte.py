@@ -28,12 +28,28 @@ Your Judgement (Just answer: Equal or Not Equal. No need to explain the reason.)
 # """
 
 # 5. のプロンプト（追加）
+# v1.0
 eliminate_hallucination_prompt = """Evaluate the LLM instruction below to see if it:
 1. It does not use non-existent words.
 2. Relates to factual information for Japanese.
 Prompt: {instruction}
 Your Judgement (Just answer: True or False. No need to explain the reason.):
 """
+# v1.1
+# eliminate_hallucination_prompt = """Evaluate the prompt below to see if it:
+# 1. It does not use non-existent words.
+# 2. Relates to factual information in Japan.
+# Returns True for mathematics, and programming tasks.
+# Prompt: {instruction}
+# Your Judgement (Just answer: True or False. No need to explain the reason.):
+# """
+# v1.2
+# eliminate_hallucination_prompt = """Evaluate the prompt below to see if it:
+# 1. It does not use non-existent words.
+# 2. Is not a question that contains untrue information in Japan.
+# Prompt: {instruction}
+# Your Judgement (Just answer: True or False. No need to explain the reason. However, return True for math and programming tasks regardless of the above.):
+# """
 
 def createEliminateComparePrompt(instruction, evol_instruction):
     prompt = eliminate_compare_prompt.format(

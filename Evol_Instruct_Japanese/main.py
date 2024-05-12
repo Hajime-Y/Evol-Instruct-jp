@@ -30,7 +30,7 @@ def parse_arguments():
 	parser.add_argument('--output_file', type=str, default='./output/new_generation.json', help='Output file path for new generations')
 	parser.add_argument('--eliminated_file', type=str, default='./output/eliminated.json', help='Output file path for eliminated items')
 	parser.add_argument('--model', type=str, default='mistralai/Mixtral-8x22B-Instruct-v0.1', help='model name')
-	parser.add_argument('--hallucination_check_model', type=str, default='mistralai/Mixtral-8x7B-Instruct-v0.1', help='Model to check for hallucinated words or concepts. It is recommended to use a different model from the main model.')
+	parser.add_argument('--hallucination_check_model', type=str, default='mistralai/Mixtral-8x7B-Instruct-v0.1', help='Model to check for hallucinated words or concepts. It is recommended to use a different model from the main model. If set to "", no hallucination check will be performed. Recommended for knowledge tasks but be cautious as it may reject many instructions in information processing tasks.')
 	parser.add_argument('--generations', type=int, default=3, help='Number of generations to evolve')
 	parser.add_argument('--num_instructions_to_generate', type=int, default=10, help='Number of instructions to generate in final generation')
 	parser.add_argument('--subset_size', type=int, default=-1, help='Specify the subset size of the dataset for evolution. Default is -1, which uses the entire dataset.')

@@ -16,7 +16,7 @@ def evol_instruct(all_objs, model="mistralai/Mixtral-8x22B-Instruct-v0.1", hallu
     Args:
         all_objs (list): 進化させる指示のリスト。
         model (str): 使用するモデルの名前。デフォルトは 'mistralai/Mixtral-8x22B-Instruct-v0.1'。
-        hallucination_check_model (str): 存在しない単語・概念等が含まれるかどうかを確認するモデルの名前。modelとは異なるモデルを指定することを推奨。デフォルトは 'mistralai/Mixtral-8x7B-Instruct-v0.1'。
+        hallucination_check_model (str): 存在しない単語・概念等が含まれるかどうかを確認するモデルの名前。modelとは異なるモデルを指定することを推奨。デフォルトは 'mistralai/Mixtral-8x7B-Instruct-v0.1'。""の場合、ハルシネーションのチェックは行わない。
         stop_words (list): ストップワードのリスト。デフォルトは空のリスト。
 		final_gen_flg (bool): 最終世代(Answerが必要な世代)かどうかのフラグ。デフォルトはFalse。
 
@@ -86,9 +86,10 @@ def process_obj(cur_obj, model, hallucination_check_model, stop_words, answer_fl
         return "eliminated", {"id": origin_id, "generation": generation, "evol_history": evol_history, "instruction": evol_instruction, "output": "", "type": 4}
     
     # 5. instructionに存在しない単語・概念等が含まれるかどうか（追加）
-    check_prompt = createEliminateHallucinationPrompt(evol_instruction)
-    if not check_hallucination(check_prompt, model_name=hallucination_check_model):
-        return "eliminated", {"id": origin_id, "generation": generation, "evol_history": evol_history, "instruction": evol_instruction, "output": "", "type": 5}
+    if hallucination_check_model:
+        check_prompt = createEliminateHallucinationPrompt(evol_instruction)
+        if not check_hallucination(check_prompt, model_name=hallucination_check_model):
+            return "eliminated", {"id": origin_id, "generation": generation, "evol_history": evol_history, "instruction": evol_instruction, "output": "", "type": 5}
     
     # 回答の生成
     if answer_flg:
