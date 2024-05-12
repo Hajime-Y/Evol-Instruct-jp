@@ -65,7 +65,7 @@ def call_chatmodel(instruction, model_name="mistralai/Mixtral-8x22B-Instruct-v0.
     return ans
 
 
-def check_evol_instruction(prompt, model_name="mistralai/Mixtral-8x22B-Instruct-v0.1"):
+def compare_evol_instructions(prompt, model_name="mistralai/Mixtral-8x22B-Instruct-v0.1"):
     """
     データに対してチェックを行い、結果をbool値で返す。
 
@@ -97,3 +97,35 @@ def check_evol_instruction(prompt, model_name="mistralai/Mixtral-8x22B-Instruct-
     # 最大数確認しても結果が不明な場合、Falseとする
     return False
     
+
+# def check_evol_instruction(prompt, model_name="mistralai/Mixtral-8x22B-Instruct-v0.1"):
+#     """
+#     データに対してチェックを行い、結果をbool値で返す。
+
+#     Args:
+#     prompt (str): チェック用のプロンプト
+
+#     Returns:
+#     bool: チェックの結果(Equal: True, Not Equal: False)
+#     """
+#     # 最大5回確認
+#     for _ in range(5):
+#         try:
+#             check_result = get_oai_completion(
+#                 prompt, 
+#                 model=model_name,
+#                 max_tokens=3,
+#             )
+#             # print(f"check_result: {check_result}")
+#             # resultを返す(TrueとFalseのどちらか)
+#             if "Not Equal" in check_result:
+#                 return False
+#             elif "Equal" in check_result:
+#                 return True
+#             else:
+#                 continue
+#         except Exception as e:
+#             print(f"Error: {e}")
+#         time.sleep(2)  # リクエストレートリミットのために一時停止
+#     # 最大数確認しても結果が不明な場合、Falseとする
+#     return False

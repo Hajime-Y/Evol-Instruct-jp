@@ -2,7 +2,7 @@ import random
 from tqdm.auto import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from mixtral_access import call_chatmodel, check_evol_instruction
+from mixtral_access import call_chatmodel, compare_evol_instructions
 from depth import createConstraintsPrompt, createDeepenPrompt, createConcretizingPrompt, createReasoningPrompt
 from breadth import createBreadthPrompt
 from eliminte import createEliminatePrompt, check_difficulty, check_punctuation_stopwords, check_copied_words
@@ -73,7 +73,7 @@ def process_obj(cur_obj, model, stop_words, answer_flg):
     # 進化したInstructionのチェック
     # 1. instruction, evol_instructionが同等かどうか
     check_prompt = createEliminatePrompt(instruction, evol_instruction)
-    if check_evol_instruction(check_prompt, model_name=model):
+    if compare_evol_instructions(check_prompt, model_name=model):
         return "eliminated", {"id": origin_id, "generation": generation, "evol_history": evol_history, "instruction": evol_instruction, "output": "", "type": 1}
 
     # 4. 進化した命令が進化するプロンプトからいくつかの単語を明らかにコピーしているかどうか
