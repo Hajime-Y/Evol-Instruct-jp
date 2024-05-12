@@ -3,12 +3,17 @@ from tqdm.auto import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from mixtral_access import call_chatmodel, compare_evol_instructions, check_hallucination
-from depth import createConstraintsPrompt, createDeepenPrompt, createConcretizingPrompt, createReasoningPrompt
+from depth import createConstraintsPrompt, createDeepenPrompt, createConcretizingPrompt, createReasoningPrompt, createComplicateInputPrompt
 from breadth import createBreadthPrompt
 from eliminte import createEliminateComparePrompt, createEliminateHallucinationPrompt, check_difficulty, check_punctuation_stopwords, check_copied_words
 
 
-def evol_instruct(all_objs, model="mistralai/Mixtral-8x22B-Instruct-v0.1", hallucination_check_model="mistralai/Mixtral-8x7B-Instruct-v0.1", stop_words=[], final_gen_flg=False):
+def evol_instruct(all_objs, 
+                  model="mistralai/Mixtral-8x22B-Instruct-v0.1", 
+                  hallucination_check_model="mistralai/Mixtral-8x7B-Instruct-v0.1", 
+                  stop_words=[], 
+                  final_gen_flg=False, 
+                  use_complicate_input_prompt=False):
 	"""
     渡されたInstructionを含む辞書リスト(all_objs)に対して、evol_instructを行う。
 	成功したinstructionを含む辞書リスト(evol_objs)と失敗したinstructionを含む辞書リスト(pool_objs)を返す。
@@ -19,6 +24,7 @@ def evol_instruct(all_objs, model="mistralai/Mixtral-8x22B-Instruct-v0.1", hallu
         hallucination_check_model (str): 存在しない単語・概念等が含まれるかどうかを確認するモデルの名前。modelとは異なるモデルを指定することを推奨。デフォルトは 'mistralai/Mixtral-8x7B-Instruct-v0.1'。""の場合、ハルシネーションのチェックは行わない。
         stop_words (list): ストップワードのリスト。デフォルトは空のリスト。
 		final_gen_flg (bool): 最終世代(Answerが必要な世代)かどうかのフラグ。デフォルトはFalse。
+        use_complicate_input_prompt (bool): complicate input promptを進化方法の1つとして採用するかどうか（True: する、False: しない）。デフォルトはFalse
 
     Returns:
         tuple: 成功したinstructionを含む辞書リスト(evol_objs),失敗したinstructionを含む辞書リスト(pool_objs),現在の世代(generation)のタプル。
@@ -32,7 +38,7 @@ def evol_instruct(all_objs, model="mistralai/Mixtral-8x22B-Instruct-v0.1", hallu
 		return evol_objs, pool_objs
 	
 	with ThreadPoolExecutor() as executor:
-		futures = [executor.submit(process_obj, obj, model, hallucination_check_model, stop_words, final_gen_flg) for obj in all_objs]
+		futures = [executor.submit(process_obj, obj, model, hallucination_check_model, stop_words, final_gen_flg, use_complicate_input_prompt) for obj in all_objs]
 		for future in as_completed(futures):
 			category, result = future.result()
 			if category == "eliminated":
@@ -47,7 +53,7 @@ def evol_instruct(all_objs, model="mistralai/Mixtral-8x22B-Instruct-v0.1", hallu
 	return evol_objs, pool_objs
 
 
-def process_obj(cur_obj, model, hallucination_check_model, stop_words, answer_flg):
+def process_obj(cur_obj, model, hallucination_check_model, stop_words, answer_flg, use_complicate_input_prompt):
 	# ID
     origin_id = cur_obj.get("id", "")
     # 世代
@@ -65,7 +71,7 @@ def process_obj(cur_obj, model, hallucination_check_model, stop_words, answer_fl
         instruction = cur_obj['instruction'].strip()
 
     # 進化方法の選定(prompt, evol_type)
-    selected_evol_prompt, selected_evol_type = select_evolution_prompt(instruction, breadth_mult)
+    selected_evol_prompt, selected_evol_type = select_evolution_prompt(instruction, breadth_mult, use_complicate_input_prompt)
     evol_history += [selected_evol_type]  # 進化の歴史の更新
 
     # Instructionの進化
@@ -128,13 +134,14 @@ def calculate_breadth_multiplier(evol_history):
         return 1
 	
 
-def select_evolution_prompt(instruction, breadth_mult):
+def select_evolution_prompt(instruction, breadth_mult, use_complicate_input_prompt):
     """
     指定されたinstructionとbreadth_multに基づいて、進化方法を選定し、選ばれたpromptとevol_typeを返す。
 
     Args:
         instruction (str): 進化させるための元の指示文。
         breadth_mult (int): breadthの確率を上げる倍率。
+        use_complicate_input_prompt (bool): complicate input promptを進化方法の1つとして採用するかどうか（True: する、False: しない）
 
     Returns:
         tuple: 選ばれたpromptとevol_typeのタプル。
@@ -144,8 +151,22 @@ def select_evolution_prompt(instruction, breadth_mult):
     evol_prompts.append({"prompt": createDeepenPrompt(instruction), "evol_type": "deepen"})
     evol_prompts.append({"prompt": createConcretizingPrompt(instruction), "evol_type": "concretizing"})
     evol_prompts.append({"prompt": createReasoningPrompt(instruction), "evol_type": "reasoning"})
+    if use_complicate_input_prompt:
+        evol_prompts.append({"prompt": createComplicateInputPrompt(instruction, _select_input_data()), "evol_type": "complicate_input"})
     for _ in range(breadth_mult):
         evol_prompts.append({"prompt": createBreadthPrompt(instruction), "evol_type": "breadth"})
 
     selected = random.choice(evol_prompts)
     return selected["prompt"], selected["evol_type"]
+
+
+def _select_input_data():
+    data_formats = [
+        "XML data",
+        "SQL database",
+        "python code",
+        "HTML page",
+        "Shell cmd",
+        "JSON data"
+    ]
+    return random.choice(data_formats)

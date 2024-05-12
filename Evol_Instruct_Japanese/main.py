@@ -35,6 +35,7 @@ def parse_arguments():
 	parser.add_argument('--num_instructions_to_generate', type=int, default=10, help='Number of instructions to generate in final generation')
 	parser.add_argument('--subset_size', type=int, default=-1, help='Specify the subset size of the dataset for evolution. Default is -1, which uses the entire dataset.')
 	parser.add_argument('--start_subset_index', type=int, default=0, help='Index of the subset to start evolution from. Default is 0.')
+	parser.add_argument('--use_complicate_input_prompt', type=bool, default=False, help='Whether to use a complicated input prompt as one of the evolution methods. Recommended to set to True for mathematical or programming tasks.')
 	return parser.parse_args()
 
 
@@ -128,6 +129,7 @@ def main():
 					hallucination_check_model=hallucination_check_model,
 					stop_words=stop_words,
 					final_gen_flg=(gen_number==final_gen),  # 最終世代のみAnswerを生成
+					use_complicate_input_prompt=args.use_complicate_input_prompt,  # complicate input promptを進化方法の1つとして採用するかどうか
 				)
 				# 格納
 				all_evol_objs[f"gen_{gen_number}"].extend(copy.deepcopy(evol_objs))  # 辞書の操作は参照によるもの。evol_objsの変更がall_evol_ojsに影響を与えないようにdeepcopyする。
