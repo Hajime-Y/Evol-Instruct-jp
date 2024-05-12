@@ -9,7 +9,8 @@ python main.py \
 	--model "mistralai/Mixtral-8x22B-Instruct-v0.1" \
 	--generations 3 \
 	--num_instructions_to_generate 10 \
-	--subset_size 10
+	--subset_size 10 \
+	--start_subset_index 0
 """
 
 import os
@@ -31,6 +32,7 @@ def parse_arguments():
 	parser.add_argument('--generations', type=int, default=3, help='Number of generations to evolve')
 	parser.add_argument('--num_instructions_to_generate', type=int, default=10, help='Number of instructions to generate in final generation')
 	parser.add_argument('--subset_size', type=int, default=-1, help='Specify the subset size of the dataset for evolution. Default is -1, which uses the entire dataset.')
+	parser.add_argument('--start_subset_index', type=int, default=0, help='Index of the subset to start evolution from. Default is 0.')
 	return parser.parse_args()
 
 
@@ -89,12 +91,14 @@ def main():
 
 
 	# 進捗バーの初期化
-	pbar = tqdm(total=args.num_instructions_to_generate, initial=first_count, desc=f"Evolution Progress")
+	pbar = tqdm(total=args.num_instructions_to_generate, initial=first_count, desc=f"＊Evolution Progress")
 	
 
 	# 複数回Instruction進化をnum_instructions_to_generate数に達するまで実施
 	# ループ前の件数
 	cur_count = len(all_evol_objs[f"gen_{final_gen}"])
+	# 最初のループかどうかを追跡するフラグ
+	first_loop = True
 	while cur_count < args.num_instructions_to_generate:
 		next_all_objs = copy.deepcopy(all_objs)
 
@@ -102,10 +106,15 @@ def main():
 		if args.subset_size > 0:
 			subset_indices = range(0, len(next_all_objs), args.subset_size)
 			subsets = [next_all_objs[i:i + args.subset_size] for i in subset_indices]
+			# 最初のループでのみstart_subset_indexから開始
+			if first_loop:
+				subsets = subsets[args.start_subset_index:]
+				print("\nsubset{}から進化を開始します。".format(args.start_subset_index))
 		else:
 			subsets = [next_all_objs]  # サブセットなしで全データを使用
 
-		for subset in tqdm(subsets, disable=len(subsets) == 1, desc="Subset Progress"):
+		for i in tqdm(range(len(subsets)), disable=len(subsets) == 1, total=len(subsets)+args.start_subset_index, initial=args.start_subset_index, desc="Subset Progress"):
+			subset = subsets[i]
 			# 指定された世代までInstruction進化
 			for gen_number in tqdm(range(cur_gen+1, final_gen+1), desc=f"Generation Progress"):
 				# Instructionの進化
@@ -138,8 +147,18 @@ def main():
 
 			# 生成目標数に達したか確認
 			if cur_count >= args.num_instructions_to_generate:
-				print("目標数に達しました。ループを終了します。")
+				# サブセットが設定されている場合
+				if args.subset_size > 0:
+					if first_loop:
+						print(f"\nsubset{i+args.start_subset_index} で目標数に達しました。ループを終了します。")
+					else:
+						print(f"\nsubset{i} で目標数に達しました。ループを終了します。")
+				else:
+					print("\n目標数に達しました。ループを終了します。")
 				break  # forループを抜ける
+		
+		# フラグを更新
+		first_loop = False
 
 
 	# 進捗バーを完了
